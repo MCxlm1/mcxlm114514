@@ -1,31 +1,605 @@
 <!DOCTYPE html>
-<html lang="zh-Hans"><head>
- <meta charset="utf-8">
-  <title>存的有的没的的东西</title>
-<style>
-  .god{
-  backgroud-color: #f1f1f1;
-  width:600px;
-  height:250px;
-  margin:auto;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  text-align:0;
-  }
-  </style>
-  </head>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft 基岩版性能分析器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+        }
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            touch-action: manipulation;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-block;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        .paste-area {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+        }
+        .paste-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            flex: 1 1 150px;
+            min-width: 0;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .stat-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            word-break: break-word;
+        }
+        .chart-container {
+            margin-bottom: 30px;
+            height: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        .function-name {
+            font-family: monospace;
+            word-break: break-word;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .error {
+            color: #f44336;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            .stat-card {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
 <body>
-<div class="god">
-<h1>本网站仅用于存本人需要的东西</h1>
-<p1>本网站搭建与github服务器上
-<br>
-一般无特殊情况均可访问</p1>
-</div>
-<hr>
-<h1>
-一些有的没的的东西：
-</h1>
-<h1>累了吧，听听音乐吧</h1>
-<audio src="./res/nbpl.mp3" controls></audio>
+    <div class="container">
+        <h1>Minecraft 基岩版性能分析器</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="fileInput" class="file-input" accept=".cpuprofile,application/json">
+            <button class="upload-btn" id="uploadBtn">上传性能分析文件</button>
+            <p>或</p>
+            <div class="paste-area">
+                <p>直接粘贴 JSON 数据:</p>
+                <textarea id="jsonInput" placeholder='粘贴您的.cpuprofile或JSON内容...'></textarea>
+                <button class="paste-btn" id="pasteBtn">分析粘贴的数据</button>
+            </div>
+            <div class="error" id="errorMsg"></div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在分析性能数据...</p>
+        </div>
+        
+        <div id="analysisResults" style="display: none;">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-title">总采样时间</div>
+                    <div class="stat-value" id="totalTime">0 ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">采样点数量</div>
+                    <div class="stat-value" id="sampleCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">最耗时的函数</div>
+                    <div class="stat-value" id="topFunction">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">函数调用总数</div>
+                    <div class="stat-value" id="functionCount">0</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="timeChart"></canvas>
+            </div>
+            
+            <h3>最耗时的函数</h3>
+            <div style="overflow-x: auto;">
+                <table id="timeTable">
+                    <thead>
+                        <tr>
+                            <th>函数名</th>
+                            <th>调用次数</th>
+                            <th>总耗时 (ms)</th>
+                            <th>所在文件</th>
+                            <th>行号</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <h3>调用关系</h3>
+            <div style="overflow-x: auto;">
+                <table id="callTreeTable">
+                    <thead>
+                        <tr>
+                            <th>父函数</th>
+                            <th>子函数</th>
+                            <th>调用次数</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let profileData = null;
+        let timeChart = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const jsonInput = document.getElementById('jsonInput');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            // 文件上传按钮
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function(e) {
+                handleFileSelect(e).catch(error => {
+                    showError(error.message);
+                });
+            });
+            
+            // 粘贴数据分析按钮
+            pasteBtn.addEventListener('click', function() {
+                try {
+                    const jsonText = jsonInput.value.trim();
+                    if (!jsonText) {
+                        showError('请粘贴JSON数据');
+                        return;
+                    }
+                    
+                    const loading = document.getElementById('loading');
+                    const results = document.getElementById('analysisResults');
+                    
+                    loading.style.display = 'block';
+                    results.style.display = 'none';
+                    errorMsg.style.display = 'none';
+                    
+                    // 尝试解析JSON
+                    profileData = JSON.parse(jsonText);
+                    analyzeProfile(profileData);
+                    
+                    loading.style.display = 'none';
+                    results.style.display = 'block';
+                } catch (error) {
+                    showError('解析JSON失败: ' + error.message);
+                }
+            });
+            
+            // 拖放支持
+            const uploadSection = document.querySelector('.upload-section');
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.style.borderColor = '#4CAF50';
+                uploadSection.style.backgroundColor = '#e8f5e9';
+            });
+            
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.style.borderColor = '#ccc';
+                uploadSection.style.backgroundColor = '#f9f9f9';
+            });
+            
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.style.borderColor = '#ccc';
+                uploadSection.style.backgroundColor = '#f9f9f9';
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect({ target: fileInput }).catch(error => {
+                        showError(error.message);
+                    });
+                }
+            });
+            
+            // 点击错误信息关闭
+            errorMsg.addEventListener('click', function() {
+                this.style.display = 'none';
+            });
+        });
+        
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('analysisResults');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            try {
+                const fileContent = await readFileAsText(file);
+                profileData = JSON.parse(fileContent);
+                analyzeProfile(profileData);
+                
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            } catch (error) {
+                showError('解析文件时出错: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('读取文件失败'));
+                reader.readAsText(file);
+            });
+        }
+        
+        function analyzeProfile(data) {
+            if (!data || !data.nodes || !data.samples || !data.timeDeltas) {
+                throw new Error('无效的 CPU profile 数据');
+            }
+            
+            // 计算总时间 (微秒转换为毫秒)
+            const totalTime = (data.endTime - data.startTime) / 1000;
+            document.getElementById('totalTime').textContent = totalTime.toFixed(2) + ' ms';
+            
+            // 采样点数量
+            document.getElementById('sampleCount').textContent = data.samples.length;
+            
+            // 分析函数调用
+            const functionStats = analyzeFunctionCalls(data);
+            document.getElementById('functionCount').textContent = functionStats.functions.length;
+            
+            // 显示最耗时的函数
+            if (functionStats.functions.length > 0) {
+                const topFunc = functionStats.functions[0];
+                document.getElementById('topFunction').textContent = 
+                    `${topFunc.name} (${(topFunc.selfTime / 1000).toFixed(2)} ms)`;
+            }
+            
+            // 渲染图表和表格
+            renderTimeChart(functionStats);
+            renderTimeTable(functionStats);
+            renderCallTree(data);
+        }
+        
+        function analyzeFunctionCalls(data) {
+            const functions = {};
+            const callRelations = {};
+            
+            // 创建函数映射
+            data.nodes.forEach(node => {
+                const funcId = node.id;
+                const callFrame = node.callFrame || {};
+                
+                functions[funcId] = {
+                    id: funcId,
+                    name: callFrame.functionName || '(匿名函数)',
+                    scriptId: callFrame.scriptId || '',
+                    url: callFrame.url || '',
+                    lineNumber: callFrame.lineNumber || 0,
+                    hitCount: node.hitCount || 0,
+                    selfTime: 0,
+                    totalTime: 0
+                };
+                
+                // 记录调用关系
+                if (node.children) {
+                    node.children.forEach(childId => {
+                        const key = `${funcId}-${childId}`;
+                        callRelations[key] = (callRelations[key] || 0) + 1;
+                    });
+                }
+            });
+            
+            // 分析样本耗时
+            data.samples.forEach((sample, index) => {
+                const timeDelta = data.timeDeltas[index] || 0;
+                
+                // 更新顶层函数的自身时间
+                if (functions[sample]) {
+                    functions[sample].selfTime += timeDelta;
+                }
+                
+                // 更新调用链中所有函数的总时间
+                let currentId = sample;
+                while (currentId && functions[currentId]) {
+                    functions[currentId].totalTime += timeDelta;
+                    
+                    // 查找父节点
+                    const parentNode = data.nodes.find(n => n.children && n.children.includes(currentId));
+                    currentId = parentNode ? parentNode.id : null;
+                }
+            });
+            
+            // 转换为数组并排序
+            const functionArray = Object.values(functions)
+                .sort((a, b) => b.selfTime - a.selfTime);
+            
+            return {
+                functions: functionArray,
+                callRelations: callRelations
+            };
+        }
+        
+        function renderTimeChart(stats) {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            const topFunctions = stats.functions.slice(0, 15);
+            
+            if (timeChart) {
+                timeChart.destroy();
+            }
+            
+            timeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topFunctions.map(f => f.name),
+                    datasets: [{
+                        label: '函数耗时 (ms)',
+                        data: topFunctions.map(f => f.selfTime / 1000),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '耗时 (ms)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    // 缩短长函数名显示
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const func = stats.functions[context.dataIndex];
+                                    return [
+                                        `文件: ${func.url || '未知'}`,
+                                        `行号: ${func.lineNumber}`,
+                                        `调用次数: ${func.hitCount}`
+                                    ].join('\n');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTimeTable(stats) {
+            const tableBody = document.querySelector('#timeTable tbody');
+            tableBody.innerHTML = '';
+            
+            stats.functions.slice(0, 50).forEach(func => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td class="function-name">${func.name}</td>
+                    <td>${func.hitCount}</td>
+                    <td>${(func.selfTime / 1000).toFixed(2)}</td>
+                    <td>${func.url || ''}</td>
+                    <td>${func.lineNumber}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function renderCallTree(data) {
+            const tableBody = document.querySelector('#callTreeTable tbody');
+            tableBody.innerHTML = '';
+            
+            // 收集所有调用关系
+            const relations = {};
+            data.nodes.forEach(node => {
+                if (node.children) {
+                    node.children.forEach(childId => {
+                        const key = `${node.id}-${childId}`;
+                        relations[key] = (relations[key] || 0) + 1;
+                    });
+                }
+            });
+            
+            // 转换为可显示的调用关系
+            const displayRelations = [];
+            Object.keys(relations).forEach(key => {
+                const [parentId, childId] = key.split('-');
+                const parentNode = data.nodes.find(n => n.id == parentId);
+                const childNode = data.nodes.find(n => n.id == childId);
+                
+                if (parentNode && childNode) {
+                    displayRelations.push({
+                        parent: getFunctionName(parentNode),
+                        child: getFunctionName(childNode),
+                        count: relations[key]
+                    });
+                }
+            });
+            
+            // 按调用次数排序并显示前50个
+            displayRelations.sort((a, b) => b.count - a.count)
+                .slice(0, 50)
+                .forEach(rel => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${rel.parent}</td>
+                        <td>${rel.child}</td>
+                        <td>${rel.count}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+        }
+        
+        function getFunctionName(node) {
+            const callFrame = node.callFrame || {};
+            let name = callFrame.functionName || '(匿名函数)';
+            
+            if (callFrame.url) {
+                const urlParts = callFrame.url.split('/');
+                const scriptName = urlParts[urlParts.length - 1];
+                name += ` (${scriptName}:${callFrame.lineNumber})`;
+            }
+            
+            return name;
+        }
+    </script>
+</body>
+</html>
