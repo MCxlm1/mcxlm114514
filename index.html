@@ -2,16 +2,21 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minecraft 脚本性能分析器</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <style>
         :root {
             --primary: #4285f4;
+            --primary-dark: #3367d6;
             --secondary: #34a853;
+            --secondary-dark: #2d8e49;
             --text: #333;
+            --text-light: #5f6368;
             --light-bg: #f8f9fa;
             --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --error: #d32f2f;
+            --error-bg: #ffebee;
         }
         * {
             box-sizing: border-box;
@@ -24,27 +29,28 @@
             background: var(--light-bg);
             color: var(--text);
             padding: 16px;
+            -webkit-text-size-adjust: 100%;
         }
         .container {
             max-width: 1000px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: var(--card-shadow);
         }
         h1 {
             color: var(--primary);
             text-align: center;
-            margin-bottom: 24px;
-            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-size: clamp(1.5rem, 4vw, 1.8rem);
         }
         .upload-section {
             background: white;
             border: 2px dashed #dadce0;
             border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
             text-align: center;
             transition: all 0.2s;
         }
@@ -64,17 +70,31 @@
             display: inline-block;
             margin: 8px 0;
             font-weight: 500;
+            min-width: 120px;
+            min-height: 48px;
+            touch-action: manipulation;
         }
-        .btn:hover {
-            background: #3367d6;
+        .btn:hover, .btn:focus {
+            background: var(--primary-dark);
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            outline: none;
         }
         .btn-secondary {
             background: var(--secondary);
         }
+        .btn-secondary:hover, .btn-secondary:focus {
+            background: var(--secondary-dark);
+        }
+        .btn-example {
+            background: #f1f3f4;
+            color: var(--text);
+        }
+        .btn-example:hover, .btn-example:focus {
+            background: #e8eaed;
+        }
         .paste-area {
-            margin-top: 20px;
+            margin-top: 16px;
         }
         textarea {
             width: 100%;
@@ -89,25 +109,25 @@
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
         .stat-card {
             background: white;
             border-radius: 8px;
-            padding: 16px;
+            padding: 14px;
             box-shadow: var(--card-shadow);
         }
         .score-card {
             grid-column: 1 / -1;
             text-align: center;
-            padding: 20px;
+            padding: 16px;
             background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
             border-radius: 8px;
         }
         .score-value {
-            font-size: 3rem;
+            font-size: clamp(2.5rem, 8vw, 3rem);
             font-weight: bold;
             margin: 8px 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -115,32 +135,32 @@
             -webkit-text-fill-color: transparent;
         }
         .stat-title {
-            font-size: 0.9rem;
-            color: #5f6368;
-            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 6px;
             font-weight: 500;
         }
         .stat-value {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             font-weight: bold;
         }
         .chart-container {
-            height: 400px;
-            margin: 24px 0;
+            height: 300px;
+            margin: 20px 0;
             position: relative;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 24px 0;
+            margin: 20px 0;
             background: white;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: var(--card-shadow);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         th, td {
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: left;
             border-bottom: 1px solid #f1f3f4;
         }
@@ -148,6 +168,8 @@
             background: #f8f9fa;
             font-weight: 600;
             color: #3c4043;
+            position: sticky;
+            top: 0;
         }
         tr:hover {
             background: #f8f9fa;
@@ -155,18 +177,19 @@
         .function-name {
             font-family: 'Roboto Mono', monospace;
             word-break: break-word;
+            font-size: 0.8rem;
         }
         .loading {
             text-align: center;
-            padding: 40px 0;
+            padding: 30px 0;
             display: none;
         }
         .spinner {
             border: 4px solid rgba(66, 133, 244, 0.1);
             border-radius: 50%;
             border-top: 4px solid var(--primary);
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             animation: spin 1s linear infinite;
             margin: 0 auto 16px;
         }
@@ -175,30 +198,74 @@
             100% { transform: rotate(360deg); }
         }
         .error {
-            color: #d32f2f;
-            background: #ffebee;
+            color: var(--error);
+            background: var(--error-bg);
             padding: 12px 16px;
             border-radius: 6px;
-            margin: 16px 0;
+            margin: 12px 0;
             display: none;
             font-size: 0.9rem;
+            position: relative;
+        }
+        .error-close {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--error);
         }
         .highlight {
             color: var(--secondary);
             font-weight: bold;
         }
-        @media (max-width: 768px) {
+        .file-info {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 8px;
+            display: none;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 12px 0;
+        }
+        @media (max-width: 600px) {
             .container {
+                padding: 12px;
+            }
+            .upload-section {
                 padding: 16px;
             }
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 10px;
             }
             .chart-container {
-                height: 300px;
+                height: 250px;
             }
             th, td {
-                padding: 10px 12px;
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            .btn {
+                padding: 10px 16px;
+                min-width: 100px;
+                min-height: 42px;
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 400px) {
+            .btn-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -209,13 +276,24 @@
         
         <div class="upload-section" id="uploadSection">
             <input type="file" id="fileInput" accept=".cpuprofile,application/json" style="display:none;">
-            <button class="btn" id="uploadBtn">上传分析文件</button>
+            <div class="btn-group">
+                <button class="btn" id="uploadBtn">上传分析文件</button>
+                <button class="btn btn-example" id="exampleBtn">加载示例数据</button>
+            </div>
+            <div class="file-info" id="fileInfo"></div>
+            
             <div class="paste-area">
                 <p>或直接粘贴JSON数据:</p>
                 <textarea id="jsonInput" placeholder='粘贴您的.cpuprofile或JSON内容...'></textarea>
-                <button class="btn btn-secondary" id="pasteBtn">分析粘贴数据</button>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="pasteBtn">分析粘贴数据</button>
+                    <button class="btn btn-example" id="clearBtn">清空</button>
+                </div>
             </div>
-            <div class="error" id="errorMsg"></div>
+            <div class="error" id="errorMsg">
+                <button class="error-close" aria-label="关闭错误信息">×</button>
+                <div id="errorText"></div>
+            </div>
         </div>
         
         <div class="loading" id="loading">
@@ -272,19 +350,36 @@
     </div>
 
     <script>
+        // 延迟加载Chart.js
+        function loadChartJS() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
         let profileData = null;
         let timeChart = null;
+        let chartJSLoaded = false;
         
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化元素
             const fileInput = document.getElementById('fileInput');
             const uploadBtn = document.getElementById('uploadBtn');
             const pasteBtn = document.getElementById('pasteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const exampleBtn = document.getElementById('exampleBtn');
             const jsonInput = document.getElementById('jsonInput');
             const errorMsg = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+            const errorClose = document.querySelector('.error-close');
             const loading = document.getElementById('loading');
             const results = document.getElementById('analysisResults');
             const uploadSection = document.getElementById('uploadSection');
+            const fileInfo = document.getElementById('fileInfo');
             
             // 文件上传处理
             uploadBtn.addEventListener('click', function(e) {
@@ -293,6 +388,36 @@
             });
             
             fileInput.addEventListener('change', handleFileSelect);
+            
+            // 清空按钮
+            clearBtn.addEventListener('click', function() {
+                jsonInput.value = '';
+                jsonInput.focus();
+            });
+            
+            // 示例数据按钮
+            exampleBtn.addEventListener('click', function() {
+                resetUI();
+                loading.style.display = 'block';
+                
+                // 使用示例数据
+                const exampleData = {
+                    "nodes": [
+                        {"id": 1, "callFrame": {"functionName": "main", "scriptId": "1", "url": "script.js", "lineNumber": 10}, "hitCount": 1},
+                        {"id": 2, "callFrame": {"functionName": "updateEntities", "scriptId": "1", "url": "script.js", "lineNumber": 25}, "hitCount": 60},
+                        {"id": 3, "callFrame": {"functionName": "render", "scriptId": "1", "url": "script.js", "lineNumber": 42}, "hitCount": 60},
+                        {"id": 4, "callFrame": {"functionName": "calculatePhysics", "scriptId": "1", "url": "physics.js", "lineNumber": 15}, "hitCount": 1200},
+                        {"id": 5, "callFrame": {"functionName": "", "scriptId": "1", "url": "script.js", "lineNumber": 35}, "hitCount": 120} // 匿名函数
+                    ],
+                    "samples": Array(60).fill().map((_, i) => i % 2 === 0 ? 2 : 3).concat(Array(1200).fill(4)).concat(Array(120).fill(5)),
+                    "timeDeltas": Array(1380).fill(1),
+                    "startTime": 0,
+                    "endTime": 1380000 // 1.38秒
+                };
+                
+                profileData = exampleData;
+                processProfileData();
+            });
             
             // 粘贴数据处理
             pasteBtn.addEventListener('click', function() {
@@ -334,21 +459,37 @@
                 }
             });
             
-            // 错误信息点击关闭
-            errorMsg.addEventListener('click', () => {
+            // 错误信息关闭
+            errorClose.addEventListener('click', () => {
                 errorMsg.style.display = 'none';
             });
             
             async function handleFileSelect(event) {
                 resetUI();
-                loading.style.display = 'block';
-                
                 const file = event.target.files[0];
                 if (!file) {
-                    showError('请选择文件');
+                    showError('未选择文件');
                     return;
                 }
-                
+
+                // 显示文件信息
+                fileInfo.textContent = `文件: ${file.name} (${formatFileSize(file.size)})`;
+                fileInfo.style.display = 'block';
+
+                // 验证文件类型
+                if (!file.name.endsWith('.cpuprofile') && file.type !== 'application/json') {
+                    showError('请上传.cpuprofile或JSON文件');
+                    return;
+                }
+
+                // 验证文件大小 (最大5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showError('文件太大，请选择小于5MB的文件');
+                    return;
+                }
+
+                loading.style.display = 'block';
+
                 try {
                     const fileContent = await readFileAsText(file);
                     profileData = JSON.parse(fileContent);
@@ -356,7 +497,16 @@
                 } catch (error) {
                     showError('解析文件失败: ' + error.message);
                     console.error('解析错误:', error);
+                } finally {
+                    // 重置文件输入，允许重复选择同一文件
+                    event.target.value = '';
                 }
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
             }
             
             function readFileAsText(file) {
@@ -368,12 +518,24 @@
                 });
             }
             
-            function processProfileData() {
+            async function processProfileData() {
                 try {
                     validateProfileData(profileData);
+                    
+                    // 延迟加载Chart.js
+                    if (!chartJSLoaded) {
+                        await loadChartJS();
+                        chartJSLoaded = true;
+                    }
+                    
                     analyzeProfile(profileData);
                     loading.style.display = 'none';
                     results.style.display = 'block';
+                    
+                    // 滚动到结果区域
+                    setTimeout(() => {
+                        results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
                 } catch (error) {
                     showError('数据分析失败: ' + error.message);
                 }
@@ -383,13 +545,19 @@
         function resetUI() {
             document.getElementById('errorMsg').style.display = 'none';
             document.getElementById('analysisResults').style.display = 'none';
+            document.getElementById('fileInfo').style.display = 'none';
         }
         
         function showError(message) {
             const errorMsg = document.getElementById('errorMsg');
-            errorMsg.textContent = message;
+            errorText.textContent = message;
             errorMsg.style.display = 'block';
             document.getElementById('loading').style.display = 'none';
+            
+            // 自动隐藏错误信息
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 5000);
         }
         
         function validateProfileData(data) {
@@ -449,7 +617,7 @@
                 
                 functions[funcId] = {
                     id: funcId,
-                    name: callFrame.functionName,
+                    name: callFrame.functionName || '(匿名函数)',
                     url: callFrame.url,
                     scriptId: callFrame.scriptId,
                     lineNumber: callFrame.lineNumber,
@@ -512,7 +680,7 @@
             }
             
             // 4. 检查匿名函数数量
-            const anonymousFuncs = functionStats.filter(f => !f.name);
+            const anonymousFuncs = functionStats.filter(f => f.name === '(匿名函数)');
             if (anonymousFuncs.length > 5) {
                 score -= Math.min(10, anonymousFuncs.length);
             }
@@ -529,12 +697,16 @@
             // 根据分数设置描述
             if (score >= 85) {
                 descriptionElement.textContent = '优秀 - 脚本性能非常好';
+                descriptionElement.style.color = 'var(--secondary)';
             } else if (score >= 70) {
                 descriptionElement.textContent = '良好 - 性能表现不错';
+                descriptionElement.style.color = '#689f38';
             } else if (score >= 50) {
                 descriptionElement.textContent = '一般 - 有改进空间';
+                descriptionElement.style.color = '#ffa000';
             } else {
                 descriptionElement.textContent = '较差 - 需要优化';
+                descriptionElement.style.color = 'var(--error)';
             }
         }
         
@@ -561,7 +733,7 @@
         
         function renderTimeChart(functionStats) {
             const ctx = document.getElementById('timeChart').getContext('2d');
-            const topFunctions = functionStats.slice(0, 15);
+            const topFunctions = functionStats.slice(0, 10); // 移动端只显示前10个
             
             // 销毁旧图表
             if (timeChart) {
@@ -579,20 +751,15 @@
                         borderColor: 'rgba(66, 133, 244, 1)',
                         borderWidth: 1,
                         yAxisID: 'y'
-                    }, {
-                        label: '平均耗时 (ms)',
-                        data: topFunctions.map(f => f.avgTime),
-                        backgroundColor: 'rgba(52, 168, 83, 0.7)',
-                        borderColor: 'rgba(52, 168, 83, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        legend: {
+                            position: 'top',
+                        },
                         tooltip: {
                             callbacks: {
                                 title: function(tooltipItems) {
@@ -623,23 +790,13 @@
                             },
                             beginAtZero: true
                         },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: '平均耗时 (ms)'
-                            },
-                            grid: {
-                                drawOnChartArea: false
-                            },
-                            beginAtZero: true
-                        },
                         x: {
                             ticks: {
                                 maxRotation: 45,
-                                minRotation: 45
+                                minRotation: 45,
+                                font: {
+                                    size: window.innerWidth < 600 ? 10 : 12
+                                }
                             }
                         }
                     }
@@ -649,35 +806,46 @@
         
         // 辅助函数：获取显示名称
         function getDisplayName(func) {
-            if (func.name) return func.name;
+            // 如果有名称直接返回
+            if (func.name && func.name !== '(匿名函数)') return func.name;
             
-            // 匿名函数处理
-            let name = '(匿名函数)';
-            if (func.url) {
-                const fileName = func.url.split('/').pop();
-                name += ` @ ${fileName}`;
-                if (func.lineNumber) {
-                    name += `:${func.lineNumber}`;
-                }
+            // 匿名函数处理 - 尝试使用位置信息
+            let locationInfo = getLocationInfo(func);
+            if (locationInfo !== '-') {
+                return `(匿名函数 @ ${locationInfo})`;
             }
-            return name;
+            
+            // 如果连位置信息都没有
+            return '(匿名函数)';
         }
         
         // 辅助函数：获取短名称(用于图表标签)
         function getShortName(func) {
-            let name = func.name || '(匿名)';
+            if (func.name && func.name !== '(匿名函数)') {
+                return func.name.length > 20 ? func.name.substring(0, 20) + '...' : func.name;
+            }
+            
+            // 匿名函数显示更简洁的信息
             if (func.url) {
                 const fileName = func.url.split('/').pop();
-                name += ` (${fileName}${func.lineNumber ? `:${func.lineNumber}` : ''})`;
+                return fileName ? `(匿名 @ ${fileName})` : '(匿名函数)';
             }
-            return name.length > 30 ? name.substring(0, 30) + '...' : name;
+            
+            return '(匿名函数)';
         }
         
         // 辅助函数：获取位置信息
         function getLocationInfo(func) {
             if (!func.url) return '-';
+            
             const fileName = func.url.split('/').pop();
-            return func.lineNumber ? `${fileName}:${func.lineNumber}` : fileName;
+            let location = fileName;
+            
+            if (func.lineNumber) {
+                location += `:${func.lineNumber}`;
+            }
+            
+            return location;
         }
     </script>
 </body>
