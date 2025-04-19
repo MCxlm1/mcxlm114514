@@ -238,6 +238,24 @@
             justify-content: center;
             margin: 16px 0;
         }
+        .time-unit-selector {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            justify-content: flex-end;
+        }
+        .time-unit-selector label {
+            margin-right: 8px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .time-unit-selector select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #dfe1e5;
+            font-size: 0.9rem;
+            background: white;
+        }
         .pc-optimized {
             display: block;
         }
@@ -273,6 +291,9 @@
                 min-width: 100px;
                 min-height: 42px;
                 font-size: 0.9rem;
+            }
+            .time-unit-selector {
+                justify-content: center;
             }
             .pc-optimized {
                 display: none;
@@ -324,6 +345,17 @@
         </div>
         
         <div id="analysisResults" style="display:none;">
+            <div class="time-unit-selector">
+                <label for="timeUnit">时间单位:</label>
+                <select id="timeUnit">
+                    <option value="ms">毫秒 (ms)</option>
+                    <option value="s">秒 (s)</option>
+                    <option value="min">分钟 (min)</option>
+                    <option value="h">小时 (h)</option>
+                    <option value="auto">自动选择</option>
+                </select>
+            </div>
+            
             <div class="stats-grid">
                 <div class="stat-card score-card">
                     <div class="stat-title">脚本性能评分</div>
@@ -364,8 +396,8 @@
                         <tr>
                             <th>函数名</th>
                             <th>调用次数</th>
-                            <th>总耗时(ms)</th>
-                            <th>平均耗时(ms)</th>
+                            <th>总耗时</th>
+                            <th>平均耗时</th>
                             <th class="pc-optimized">耗时占比</th>
                             <th>位置</th>
                         </tr>
@@ -391,6 +423,9 @@
         let profileData = null;
         let timeChart = null;
         let chartJSLoaded = false;
+        let currentTimeUnit = 'ms';
+        let functionStats = [];
+        let totalTimeMs = 0;
         
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化元素
@@ -407,6 +442,13 @@
             const results = document.getElementById('analysisResults');
             const uploadSection = document.getElementById('uploadSection');
             const fileInfo = document.getElementById('fileInfo');
+            const timeUnitSelect = document.getElementById('timeUnit');
+            
+            // 时间单位切换事件
+            timeUnitSelect.addEventListener('change', function() {
+                currentTimeUnit = this.value;
+                updateTimeDisplay();
+            });
             
             // 文件上传处理
             uploadBtn.addEventListener('click', function(e) {
@@ -604,34 +646,23 @@
         
         function analyzeProfile(data) {
             // 计算总时间(微秒转毫秒)
-            const totalTime = (data.endTime - data.startTime) / 1000;
-            document.getElementById('totalTime').textContent = totalTime.toFixed(2) + ' ms';
+            totalTimeMs = (data.endTime - data.startTime) / 1000;
             
             // 采样点数量
             document.getElementById('sampleCount').textContent = data.samples.length;
             
             // 分析函数调用
-            const functionStats = analyzeFunctionCalls(data, totalTime);
+            functionStats = analyzeFunctionCalls(data, totalTimeMs);
             
-            // 计算平均调用时间
-            const totalCalls = functionStats.reduce((sum, f) => sum + f.hitCount, 0);
-            const avgCallTime = totalCalls > 0 ? 
-                functionStats.reduce((sum, f) => sum + f.selfTime, 0) / totalCalls : 0;
-            document.getElementById('avgCallTime').textContent = avgCallTime.toFixed(4) + ' ms';
-            
-            // 显示最耗时的函数
-            if (functionStats.length > 0) {
-                const topFunc = functionStats[0];
-                document.getElementById('topFunction').textContent = 
-                    `${getDisplayName(topFunc)} (${topFunc.selfTime.toFixed(2)} ms)`;
-            }
+            // 更新显示
+            updateTimeDisplay();
             
             // 计算评分
-            const score = calculateScore(functionStats, totalTime);
+            const score = calculateScore(functionStats, totalTimeMs);
             renderScore(score);
             
             // 渲染结果
-            renderResults(functionStats, totalTime);
+            renderResults(functionStats, totalTimeMs);
         }
         
         function analyzeFunctionCalls(data, totalTime) {
@@ -682,6 +713,90 @@
                     percentage: totalTime > 0 ? (func.selfTime / totalTime * 100) : 0
                 }))
                 .sort((a, b) => b.selfTime - a.selfTime);
+        }
+        
+        // 时间单位转换函数
+        function convertTime(ms, unit = 'auto') {
+            if (unit === 'auto') {
+                // 自动选择最合适的单位
+                if (ms >= 3600000) {
+                    return { value: ms / 3600000, unit: 'h' }; // 小时
+                } else if (ms >= 60000) {
+                    return { value: ms / 60000, unit: 'min' }; // 分钟
+                } else if (ms >= 1000) {
+                    return { value: ms / 1000, unit: 's' }; // 秒
+                } else {
+                    return { value: ms, unit: 'ms' }; // 毫秒
+                }
+            } else if (unit === 'h') {
+                return { value: ms / 3600000, unit: 'h' };
+            } else if (unit === 'min') {
+                return { value: ms / 60000, unit: 'min' };
+            } else if (unit === 's') {
+                return { value: ms / 1000, unit: 's' };
+            } else {
+                return { value: ms, unit: 'ms' };
+            }
+        }
+        
+        // 格式化时间显示
+        function formatTime(ms, unit = 'auto') {
+            const converted = convertTime(ms, unit);
+            let formattedValue;
+            
+            if (converted.unit === 'h') {
+                formattedValue = converted.value.toFixed(4);
+            } else if (converted.unit === 'min') {
+                formattedValue = converted.value.toFixed(3);
+            } else if (converted.unit === 's') {
+                formattedValue = converted.value.toFixed(2);
+            } else {
+                formattedValue = converted.value.toFixed(0);
+            }
+            
+            return `${formattedValue} ${converted.unit}`;
+        }
+        
+        // 更新所有时间显示
+        function updateTimeDisplay() {
+            // 更新总采样时间
+            document.getElementById('totalTime').textContent = formatTime(totalTimeMs, currentTimeUnit);
+            
+            // 更新平均调用时间
+            const totalCalls = functionStats.reduce((sum, f) => sum + f.hitCount, 0);
+            const avgCallTime = totalCalls > 0 ? 
+                functionStats.reduce((sum, f) => sum + f.selfTime, 0) / totalCalls : 0;
+            document.getElementById('avgCallTime').textContent = formatTime(avgCallTime, currentTimeUnit);
+            
+            // 更新最耗时的函数
+            if (functionStats.length > 0) {
+                const topFunc = functionStats[0];
+                document.getElementById('topFunction').textContent = 
+                    `${getDisplayName(topFunc)} (${formatTime(topFunc.selfTime, currentTimeUnit)})`;
+            }
+            
+            // 更新表格中的时间显示
+            const tableBody = document.querySelector('#timeTable tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '';
+                functionStats.slice(0, 100).forEach(func => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="function-name">${getDisplayName(func)}</td>
+                        <td>${func.hitCount}</td>
+                        <td>${formatTime(func.selfTime, currentTimeUnit)}</td>
+                        <td class="highlight">${formatTime(func.avgTime, currentTimeUnit)}</td>
+                        <td class="pc-optimized">${func.percentage.toFixed(2)}%</td>
+                        <td>${getLocationInfo(func)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // 更新图表
+            if (timeChart) {
+                renderTimeChart(functionStats);
+            }
         }
         
         function calculateScore(functionStats, totalTime) {
@@ -739,21 +854,21 @@
             }
         }
         
-        function renderResults(functionStats, totalTime) {
+        function renderResults(stats, totalTime) {
             // 渲染图表
-            renderTimeChart(functionStats);
+            renderTimeChart(stats);
             
             // 渲染表格
             const tableBody = document.querySelector('#timeTable tbody');
             tableBody.innerHTML = '';
             
-            functionStats.slice(0, 100).forEach(func => {
+            stats.slice(0, 100).forEach(func => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="function-name">${getDisplayName(func)}</td>
                     <td>${func.hitCount}</td>
-                    <td>${func.selfTime.toFixed(2)}</td>
-                    <td class="highlight">${func.avgTime.toFixed(4)}</td>
+                    <td>${formatTime(func.selfTime, currentTimeUnit)}</td>
+                    <td class="highlight">${formatTime(func.avgTime, currentTimeUnit)}</td>
                     <td class="pc-optimized">${func.percentage.toFixed(2)}%</td>
                     <td>${getLocationInfo(func)}</td>
                 `;
@@ -765,6 +880,26 @@
             const ctx = document.getElementById('timeChart').getContext('2d');
             const topFunctions = functionStats.slice(0, 15); // PC端显示前15个
             
+            // 根据当前时间单位调整图表数据
+            const timeData = topFunctions.map(f => {
+                const converted = convertTime(f.selfTime, currentTimeUnit);
+                return converted.value;
+            });
+            
+            const avgTimeData = topFunctions.map(f => {
+                const converted = convertTime(f.avgTime, currentTimeUnit);
+                return converted.value;
+            });
+            
+            // 获取当前时间单位标签
+            let timeUnitLabel;
+            switch(currentTimeUnit) {
+                case 'h': timeUnitLabel = '小时 (h)'; break;
+                case 'min': timeUnitLabel = '分钟 (min)'; break;
+                case 's': timeUnitLabel = '秒 (s)'; break;
+                default: timeUnitLabel = '毫秒 (ms)';
+            }
+            
             // 销毁旧图表
             if (timeChart) {
                 timeChart.destroy();
@@ -775,15 +910,15 @@
                 data: {
                     labels: topFunctions.map(f => getShortName(f)),
                     datasets: [{
-                        label: '总耗时 (ms)',
-                        data: topFunctions.map(f => f.selfTime),
+                        label: `总耗时 (${timeUnitLabel})`,
+                        data: timeData,
                         backgroundColor: 'rgba(66, 133, 244, 0.7)',
                         borderColor: 'rgba(66, 133, 244, 1)',
                         borderWidth: 1,
                         yAxisID: 'y'
                     }, {
-                        label: '平均耗时 (ms)',
-                        data: topFunctions.map(f => f.avgTime),
+                        label: `平均耗时 (${timeUnitLabel})`,
+                        data: avgTimeData,
                         backgroundColor: 'rgba(52, 168, 83, 0.7)',
                         borderColor: 'rgba(52, 168, 83, 1)',
                         borderWidth: 1,
@@ -810,8 +945,8 @@
                                         `文件: ${func.url || '未知'}`,
                                         `行号: ${func.lineNumber || '未知'}`,
                                         `调用次数: ${func.hitCount}`,
-                                        `总耗时: ${func.selfTime.toFixed(2)} ms`,
-                                        `平均耗时: ${func.avgTime.toFixed(4)} ms`,
+                                        `总耗时: ${formatTime(func.selfTime, currentTimeUnit)}`,
+                                        `平均耗时: ${formatTime(func.avgTime, currentTimeUnit)}`,
                                         `耗时占比: ${func.percentage.toFixed(2)}%`
                                     ].join('\n');
                                 }
@@ -825,7 +960,7 @@
                             position: 'left',
                             title: {
                                 display: true,
-                                text: '总耗时 (ms)'
+                                text: `总耗时 (${timeUnitLabel})`
                             },
                             beginAtZero: true
                         },
@@ -835,7 +970,7 @@
                             position: 'right',
                             title: {
                                 display: true,
-                                text: '平均耗时 (ms)'
+                                text: `平均耗时 (${timeUnitLabel})`
                             },
                             grid: {
                                 drawOnChartArea: false
