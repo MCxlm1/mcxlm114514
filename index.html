@@ -32,25 +32,25 @@
             -webkit-text-size-adjust: 100%;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 24px;
             box-shadow: var(--card-shadow);
         }
         h1 {
             color: var(--primary);
             text-align: center;
-            margin-bottom: 20px;
-            font-size: clamp(1.5rem, 4vw, 1.8rem);
+            margin-bottom: 24px;
+            font-size: 1.8rem;
         }
         .upload-section {
             background: white;
             border: 2px dashed #dadce0;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
             text-align: center;
             transition: all 0.2s;
         }
@@ -94,7 +94,7 @@
             background: #e8eaed;
         }
         .paste-area {
-            margin-top: 16px;
+            margin-top: 20px;
         }
         textarea {
             width: 100%;
@@ -109,25 +109,27 @@
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
         .stat-card {
             background: white;
             border-radius: 8px;
-            padding: 14px;
+            padding: 16px;
             box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
         }
         .score-card {
             grid-column: 1 / -1;
             text-align: center;
-            padding: 16px;
+            padding: 20px;
             background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
             border-radius: 8px;
         }
         .score-value {
-            font-size: clamp(2.5rem, 8vw, 3rem);
+            font-size: 3rem;
             font-weight: bold;
             margin: 8px 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -135,32 +137,35 @@
             -webkit-text-fill-color: transparent;
         }
         .stat-title {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--text-light);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 500;
         }
         .stat-value {
-            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            font-size: 1.5rem;
             font-weight: bold;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
         }
         .chart-container {
-            height: 300px;
-            margin: 20px 0;
+            height: 500px;
+            margin: 24px 0;
             position: relative;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 24px 0;
             background: white;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: var(--card-shadow);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
         th, td {
-            padding: 10px 12px;
+            padding: 12px 16px;
             text-align: left;
             border-bottom: 1px solid #f1f3f4;
         }
@@ -177,19 +182,18 @@
         .function-name {
             font-family: 'Roboto Mono', monospace;
             word-break: break-word;
-            font-size: 0.8rem;
         }
         .loading {
             text-align: center;
-            padding: 30px 0;
+            padding: 40px 0;
             display: none;
         }
         .spinner {
             border: 4px solid rgba(66, 133, 244, 0.1);
             border-radius: 50%;
             border-top: 4px solid var(--primary);
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
             margin: 0 auto 16px;
         }
@@ -202,7 +206,7 @@
             background: var(--error-bg);
             padding: 12px 16px;
             border-radius: 6px;
-            margin: 12px 0;
+            margin: 16px 0;
             display: none;
             font-size: 0.9rem;
             position: relative;
@@ -230,27 +234,39 @@
         .btn-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 12px;
             justify-content: center;
-            margin: 12px 0;
+            margin: 16px 0;
         }
-        @media (max-width: 600px) {
+        .pc-optimized {
+            display: block;
+        }
+        .mobile-optimized {
+            display: none;
+        }
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .chart-container {
+                height: 400px;
+            }
+        }
+        @media (max-width: 768px) {
             .container {
-                padding: 12px;
+                padding: 16px;
             }
             .upload-section {
-                padding: 16px;
+                padding: 20px;
             }
             .stats-grid {
                 grid-template-columns: 1fr;
-                gap: 10px;
             }
             .chart-container {
-                height: 250px;
+                height: 300px;
             }
             th, td {
-                padding: 8px 10px;
-                font-size: 0.8rem;
+                padding: 10px 12px;
             }
             .btn {
                 padding: 10px 16px;
@@ -258,8 +274,14 @@
                 min-height: 42px;
                 font-size: 0.9rem;
             }
+            .pc-optimized {
+                display: none;
+            }
+            .mobile-optimized {
+                display: block;
+            }
         }
-        @media (max-width: 400px) {
+        @media (max-width: 480px) {
             .btn-group {
                 flex-direction: column;
                 align-items: center;
@@ -312,18 +334,22 @@
                 <div class="stat-card">
                     <div class="stat-title">总采样时间</div>
                     <div class="stat-value" id="totalTime">0 ms</div>
+                    <div class="pc-optimized stat-title">从开始到结束的总时间</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">采样点数量</div>
                     <div class="stat-value" id="sampleCount">0</div>
+                    <div class="pc-optimized stat-title">采集的性能样本总数</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">最耗时的函数</div>
                     <div class="stat-value" id="topFunction">-</div>
+                    <div class="pc-optimized stat-title">消耗时间最多的函数</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">平均调用时间</div>
                     <div class="stat-value" id="avgCallTime">0 ms</div>
+                    <div class="pc-optimized stat-title">每次函数调用的平均耗时</div>
                 </div>
             </div>
             
@@ -340,6 +366,7 @@
                             <th>调用次数</th>
                             <th>总耗时(ms)</th>
                             <th>平均耗时(ms)</th>
+                            <th class="pc-optimized">耗时占比</th>
                             <th>位置</th>
                         </tr>
                     </thead>
@@ -584,7 +611,7 @@
             document.getElementById('sampleCount').textContent = data.samples.length;
             
             // 分析函数调用
-            const functionStats = analyzeFunctionCalls(data);
+            const functionStats = analyzeFunctionCalls(data, totalTime);
             
             // 计算平均调用时间
             const totalCalls = functionStats.reduce((sum, f) => sum + f.hitCount, 0);
@@ -604,10 +631,10 @@
             renderScore(score);
             
             // 渲染结果
-            renderResults(functionStats);
+            renderResults(functionStats, totalTime);
         }
         
-        function analyzeFunctionCalls(data) {
+        function analyzeFunctionCalls(data, totalTime) {
             const functions = {};
             
             // 初始化函数数据
@@ -624,7 +651,8 @@
                     hitCount: node.hitCount || 0,
                     selfTime: 0,    // 毫秒
                     totalTime: 0,   // 毫秒
-                    avgTime: 0      // 毫秒
+                    avgTime: 0,     // 毫秒
+                    percentage: 0   // 耗时占比
                 };
             });
             
@@ -646,11 +674,12 @@
                 }
             });
             
-            // 计算平均时间并转换为数组
+            // 计算平均时间和耗时占比
             return Object.values(functions)
                 .map(func => ({
                     ...func,
-                    avgTime: func.hitCount > 0 ? func.selfTime / func.hitCount : 0
+                    avgTime: func.hitCount > 0 ? func.selfTime / func.hitCount : 0,
+                    percentage: totalTime > 0 ? (func.selfTime / totalTime * 100) : 0
                 }))
                 .sort((a, b) => b.selfTime - a.selfTime);
         }
@@ -710,7 +739,7 @@
             }
         }
         
-        function renderResults(functionStats) {
+        function renderResults(functionStats, totalTime) {
             // 渲染图表
             renderTimeChart(functionStats);
             
@@ -725,6 +754,7 @@
                     <td>${func.hitCount}</td>
                     <td>${func.selfTime.toFixed(2)}</td>
                     <td class="highlight">${func.avgTime.toFixed(4)}</td>
+                    <td class="pc-optimized">${func.percentage.toFixed(2)}%</td>
                     <td>${getLocationInfo(func)}</td>
                 `;
                 tableBody.appendChild(row);
@@ -733,7 +763,7 @@
         
         function renderTimeChart(functionStats) {
             const ctx = document.getElementById('timeChart').getContext('2d');
-            const topFunctions = functionStats.slice(0, 10); // 移动端只显示前10个
+            const topFunctions = functionStats.slice(0, 15); // PC端显示前15个
             
             // 销毁旧图表
             if (timeChart) {
@@ -751,6 +781,14 @@
                         borderColor: 'rgba(66, 133, 244, 1)',
                         borderWidth: 1,
                         yAxisID: 'y'
+                    }, {
+                        label: '平均耗时 (ms)',
+                        data: topFunctions.map(f => f.avgTime),
+                        backgroundColor: 'rgba(52, 168, 83, 0.7)',
+                        borderColor: 'rgba(52, 168, 83, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        yAxisID: 'y1'
                     }]
                 },
                 options: {
@@ -773,7 +811,8 @@
                                         `行号: ${func.lineNumber || '未知'}`,
                                         `调用次数: ${func.hitCount}`,
                                         `总耗时: ${func.selfTime.toFixed(2)} ms`,
-                                        `平均耗时: ${func.avgTime.toFixed(4)} ms`
+                                        `平均耗时: ${func.avgTime.toFixed(4)} ms`,
+                                        `耗时占比: ${func.percentage.toFixed(2)}%`
                                     ].join('\n');
                                 }
                             }
@@ -790,13 +829,23 @@
                             },
                             beginAtZero: true
                         },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '平均耗时 (ms)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            beginAtZero: true
+                        },
                         x: {
                             ticks: {
                                 maxRotation: 45,
-                                minRotation: 45,
-                                font: {
-                                    size: window.innerWidth < 600 ? 10 : 12
-                                }
+                                minRotation: 45
                             }
                         }
                     }
@@ -822,7 +871,7 @@
         // 辅助函数：获取短名称(用于图表标签)
         function getShortName(func) {
             if (func.name && func.name !== '(匿名函数)') {
-                return func.name.length > 20 ? func.name.substring(0, 20) + '...' : func.name;
+                return func.name.length > 25 ? func.name.substring(0, 25) + '...' : func.name;
             }
             
             // 匿名函数显示更简洁的信息
