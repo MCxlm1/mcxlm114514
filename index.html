@@ -2,21 +2,18 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft 脚本性能分析器</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <style>
         :root {
             --primary: #4285f4;
             --primary-dark: #3367d6;
             --secondary: #34a853;
-            --secondary-dark: #2d8e49;
             --text: #333;
-            --text-light: #5f6368;
-            --light-bg: #f8f9fa;
-            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            --error: #d32f2f;
-            --error-bg: #ffebee;
+            --text-light: #666;
+            --bg: #f8f9fa;
+            --card-bg: #fff;
+            --border: #e0e0e0;
         }
         * {
             box-sizing: border-box;
@@ -24,20 +21,19 @@
             padding: 0;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            background: var(--light-bg);
+            background: var(--bg);
             color: var(--text);
             padding: 16px;
-            -webkit-text-size-adjust: 100%;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--card-shadow);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         h1 {
             color: var(--primary);
@@ -46,8 +42,8 @@
             font-size: 1.8rem;
         }
         .upload-section {
-            background: white;
-            border: 2px dashed #dadce0;
+            background: var(--card-bg);
+            border: 2px dashed var(--border);
             border-radius: 8px;
             padding: 24px;
             margin-bottom: 24px;
@@ -62,126 +58,93 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 6px;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-block;
-            margin: 8px 0;
+            margin: 8px;
             font-weight: 500;
-            min-width: 120px;
-            min-height: 48px;
-            touch-action: manipulation;
         }
-        .btn:hover, .btn:focus {
+        .btn:hover {
             background: var(--primary-dark);
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            outline: none;
         }
         .btn-secondary {
             background: var(--secondary);
         }
-        .btn-secondary:hover, .btn-secondary:focus {
+        .btn-secondary:hover {
             background: var(--secondary-dark);
         }
         .btn-example {
             background: #f1f3f4;
             color: var(--text);
         }
-        .btn-example:hover, .btn-example:focus {
+        .btn-example:hover {
             background: #e8eaed;
         }
-        .paste-area {
-            margin-top: 20px;
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 16px 0;
         }
         textarea {
             width: 100%;
             min-height: 120px;
             padding: 12px;
-            border: 1px solid #dfe1e5;
+            border: 1px solid var(--border);
             border-radius: 6px;
             font-family: 'Roboto Mono', monospace;
             margin-bottom: 12px;
             resize: vertical;
-            font-size: 0.9rem;
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
         .stat-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 8px;
             padding: 16px;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-        }
-        .score-card {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
-            border-radius: 8px;
-        }
-        .score-value {
-            font-size: 3rem;
-            font-weight: bold;
-            margin: 8px 0;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
         }
         .stat-title {
             font-size: 0.9rem;
             color: var(--text-light);
             margin-bottom: 8px;
-            font-weight: 500;
         }
         .stat-value {
             font-size: 1.5rem;
             font-weight: bold;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
         }
         .chart-container {
-            height: 500px;
+            height: 400px;
             margin: 24px 0;
-            position: relative;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 24px 0;
-            background: white;
+            background: var(--card-bg);
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: var(--card-shadow);
-            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
         }
         th, td {
             padding: 12px 16px;
             text-align: left;
-            border-bottom: 1px solid #f1f3f4;
+            border-bottom: 1px solid var(--border);
         }
         th {
             background: #f8f9fa;
             font-weight: 600;
-            color: #3c4043;
-            position: sticky;
-            top: 0;
-        }
-        tr:hover {
-            background: #f8f9fa;
-        }
-        .function-name {
-            font-family: 'Roboto Mono', monospace;
-            word-break: break-word;
         }
         .loading {
             text-align: center;
@@ -202,80 +165,106 @@
             100% { transform: rotate(360deg); }
         }
         .error {
-            color: var(--error);
-            background: var(--error-bg);
+            color: #d32f2f;
+            background: #ffebee;
             padding: 12px 16px;
             border-radius: 6px;
             margin: 16px 0;
             display: none;
-            font-size: 0.9rem;
-            position: relative;
         }
-        .error-close {
-            position: absolute;
-            right: 8px;
-            top: 8px;
-            background: none;
-            border: none;
+        .same-functions-section {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .same-function-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        .function-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .function-name {
+            font-weight: bold;
+            font-family: 'Roboto Mono', monospace;
             font-size: 1rem;
-            cursor: pointer;
-            color: var(--error);
+            color: var(--primary-dark);
+            word-break: break-word;
+        }
+        .function-count {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .function-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .stat-item {
+            font-size: 0.9rem;
+        }
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-weight: 500;
         }
         .highlight {
             color: var(--secondary);
             font-weight: bold;
         }
-        .file-info {
+        .locations {
+            margin-top: 12px;
+        }
+        .locations-title {
             font-size: 0.9rem;
             color: var(--text-light);
-            margin-top: 8px;
-            display: none;
+            margin-bottom: 6px;
         }
-        .btn-group {
+        .locations-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            margin: 16px 0;
+            gap: 6px;
         }
-        .time-unit-selector {
-            display: flex;
-            align-items: center;
-            margin-bottom: 16px;
-            justify-content: flex-end;
-        }
-        .time-unit-selector label {
-            margin-right: 8px;
-            font-size: 0.9rem;
-            color: var(--text-light);
-        }
-        .time-unit-selector select {
-            padding: 8px 12px;
+        .location-tag {
+            background: #f0f7ff;
+            color: var(--primary-dark);
+            padding: 4px 8px;
             border-radius: 4px;
-            border: 1px solid #dfe1e5;
-            font-size: 0.9rem;
-            background: white;
+            font-size: 0.8rem;
+            font-family: 'Roboto Mono', monospace;
         }
-        .pc-optimized {
-            display: block;
+        .show-more {
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            display: inline-block;
         }
-        .mobile-optimized {
+        .mobile-function-list {
             display: none;
-        }
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .chart-container {
-                height: 400px;
-            }
         }
         @media (max-width: 768px) {
             .container {
                 padding: 16px;
             }
-            .upload-section {
-                padding: 20px;
+            .btn {
+                width: 100%;
+                margin: 8px 0;
             }
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -283,32 +272,19 @@
             .chart-container {
                 height: 300px;
             }
-            th, td {
-                padding: 10px 12px;
-            }
-            .btn {
-                padding: 10px 16px;
-                min-width: 100px;
-                min-height: 42px;
-                font-size: 0.9rem;
-            }
-            .time-unit-selector {
-                justify-content: center;
-            }
-            .pc-optimized {
+            table {
                 display: none;
             }
-            .mobile-optimized {
+            .mobile-function-list {
                 display: block;
+            }
+            .function-stats {
+                grid-template-columns: 1fr 1fr;
             }
         }
         @media (max-width: 480px) {
-            .btn-group {
-                flex-direction: column;
-                align-items: center;
-            }
-            .btn {
-                width: 100%;
+            .function-stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -323,7 +299,6 @@
                 <button class="btn" id="uploadBtn">上传分析文件</button>
                 <button class="btn btn-example" id="exampleBtn">加载示例数据</button>
             </div>
-            <div class="file-info" id="fileInfo"></div>
             
             <div class="paste-area">
                 <p>或直接粘贴JSON数据:</p>
@@ -334,7 +309,6 @@
                 </div>
             </div>
             <div class="error" id="errorMsg">
-                <button class="error-close" aria-label="关闭错误信息">×</button>
                 <div id="errorText"></div>
             </div>
         </div>
@@ -345,51 +319,31 @@
         </div>
         
         <div id="analysisResults" style="display:none;">
-            <div class="time-unit-selector">
-                <label for="timeUnit">时间单位:</label>
-                <select id="timeUnit">
-                    <option value="ms">毫秒 (ms)</option>
-                    <option value="s">秒 (s)</option>
-                    <option value="min">分钟 (min)</option>
-                    <option value="h">小时 (h)</option>
-                    <option value="auto">自动选择</option>
-                </select>
-            </div>
-            
             <div class="stats-grid">
-                <div class="stat-card score-card">
-                    <div class="stat-title">脚本性能评分</div>
-                    <div class="score-value" id="scoreValue">-</div>
-                    <div id="scoreDescription"></div>
-                </div>
-                
                 <div class="stat-card">
                     <div class="stat-title">总采样时间</div>
                     <div class="stat-value" id="totalTime">0 ms</div>
-                    <div class="pc-optimized stat-title">从开始到结束的总时间</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">采样点数量</div>
                     <div class="stat-value" id="sampleCount">0</div>
-                    <div class="pc-optimized stat-title">采集的性能样本总数</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">最耗时的函数</div>
                     <div class="stat-value" id="topFunction">-</div>
-                    <div class="pc-optimized stat-title">消耗时间最多的函数</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">平均调用时间</div>
                     <div class="stat-value" id="avgCallTime">0 ms</div>
-                    <div class="pc-optimized stat-title">每次函数调用的平均耗时</div>
                 </div>
             </div>
             
+            <h2>性能分析图表</h2>
             <div class="chart-container">
                 <canvas id="timeChart"></canvas>
             </div>
             
-            <h3>函数耗时详情</h3>
+            <h2>函数耗时详情</h2>
             <div style="overflow-x:auto;">
                 <table id="timeTable">
                     <thead>
@@ -398,37 +352,30 @@
                             <th>调用次数</th>
                             <th>总耗时</th>
                             <th>平均耗时</th>
-                            <th class="pc-optimized">耗时占比</th>
                             <th>位置</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
+            
+            <div id="mobileFunctionList" class="mobile-function-list"></div>
+            
+            <div class="same-functions-section">
+                <h2>相同函数统计</h2>
+                <div id="sameFunctionsList"></div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // 延迟加载Chart.js
-        function loadChartJS() {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        }
-
         let profileData = null;
         let timeChart = null;
-        let chartJSLoaded = false;
-        let currentTimeUnit = 'ms';
         let functionStats = [];
         let totalTimeMs = 0;
         
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化元素
             const fileInput = document.getElementById('fileInput');
             const uploadBtn = document.getElementById('uploadBtn');
             const pasteBtn = document.getElementById('pasteBtn');
@@ -437,18 +384,9 @@
             const jsonInput = document.getElementById('jsonInput');
             const errorMsg = document.getElementById('errorMsg');
             const errorText = document.getElementById('errorText');
-            const errorClose = document.querySelector('.error-close');
             const loading = document.getElementById('loading');
             const results = document.getElementById('analysisResults');
             const uploadSection = document.getElementById('uploadSection');
-            const fileInfo = document.getElementById('fileInfo');
-            const timeUnitSelect = document.getElementById('timeUnit');
-            
-            // 时间单位切换事件
-            timeUnitSelect.addEventListener('change', function() {
-                currentTimeUnit = this.value;
-                updateTimeDisplay();
-            });
             
             // 文件上传处理
             uploadBtn.addEventListener('click', function(e) {
@@ -469,19 +407,32 @@
                 resetUI();
                 loading.style.display = 'block';
                 
-                // 使用示例数据
                 const exampleData = {
                     "nodes": [
                         {"id": 1, "callFrame": {"functionName": "main", "scriptId": "1", "url": "script.js", "lineNumber": 10}, "hitCount": 1},
                         {"id": 2, "callFrame": {"functionName": "updateEntities", "scriptId": "1", "url": "script.js", "lineNumber": 25}, "hitCount": 60},
                         {"id": 3, "callFrame": {"functionName": "render", "scriptId": "1", "url": "script.js", "lineNumber": 42}, "hitCount": 60},
                         {"id": 4, "callFrame": {"functionName": "calculatePhysics", "scriptId": "1", "url": "physics.js", "lineNumber": 15}, "hitCount": 1200},
-                        {"id": 5, "callFrame": {"functionName": "", "scriptId": "1", "url": "script.js", "lineNumber": 35}, "hitCount": 120} // 匿名函数
+                        {"id": 5, "callFrame": {"functionName": "", "scriptId": "1", "url": "script.js", "lineNumber": 35}, "hitCount": 120},
+                        {"id": 6, "callFrame": {"functionName": "calculatePhysics", "scriptId": "1", "url": "physics.js", "lineNumber": 30}, "hitCount": 600},
+                        {"id": 7, "callFrame": {"functionName": "render", "scriptId": "1", "url": "script.js", "lineNumber": 50}, "hitCount": 30},
+                        {"id": 8, "callFrame": {"functionName": "Entity::runCommand", "scriptId": "1", "url": "main.js", "lineNumber": 210}, "hitCount": 200},
+                        {"id": 9, "callFrame": {"functionName": "Entity::runCommand", "scriptId": "1", "url": "main.js", "lineNumber": 216}, "hitCount": 180},
+                        {"id": 10, "callFrame": {"functionName": "", "scriptId": "1", "url": "main.js", "lineNumber": 199}, "hitCount": 150},
+                        {"id": 11, "callFrame": {"functionName": "", "scriptId": "1", "url": "main.js", "lineNumber": 211}, "hitCount": 120}
                     ],
-                    "samples": Array(60).fill().map((_, i) => i % 2 === 0 ? 2 : 3).concat(Array(1200).fill(4)).concat(Array(120).fill(5)),
-                    "timeDeltas": Array(1380).fill(1),
+                    "samples": Array(60).fill().map((_, i) => i % 2 === 0 ? 2 : 3)
+                        .concat(Array(1200).fill(4))
+                        .concat(Array(600).fill(6))
+                        .concat(Array(120).fill(5))
+                        .concat(Array(30).fill(7))
+                        .concat(Array(200).fill(8))
+                        .concat(Array(180).fill(9))
+                        .concat(Array(150).fill(10))
+                        .concat(Array(120).fill(11)),
+                    "timeDeltas": Array(2660).fill(1),
                     "startTime": 0,
-                    "endTime": 1380000 // 1.38秒
+                    "endTime": 2660000
                 };
                 
                 profileData = exampleData;
@@ -504,7 +455,6 @@
                     processProfileData();
                 } catch (error) {
                     showError('解析JSON失败: ' + error.message);
-                    console.error('解析错误:', error);
                 }
             });
             
@@ -528,34 +478,10 @@
                 }
             });
             
-            // 错误信息关闭
-            errorClose.addEventListener('click', () => {
-                errorMsg.style.display = 'none';
-            });
-            
             async function handleFileSelect(event) {
                 resetUI();
                 const file = event.target.files[0];
-                if (!file) {
-                    showError('未选择文件');
-                    return;
-                }
-
-                // 显示文件信息
-                fileInfo.textContent = `文件: ${file.name} (${formatFileSize(file.size)})`;
-                fileInfo.style.display = 'block';
-
-                // 验证文件类型
-                if (!file.name.endsWith('.cpuprofile') && file.type !== 'application/json') {
-                    showError('请上传.cpuprofile或JSON文件');
-                    return;
-                }
-
-                // 验证文件大小 (最大5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    showError('文件太大，请选择小于5MB的文件');
-                    return;
-                }
+                if (!file) return;
 
                 loading.style.display = 'block';
 
@@ -565,17 +491,7 @@
                     processProfileData();
                 } catch (error) {
                     showError('解析文件失败: ' + error.message);
-                    console.error('解析错误:', error);
-                } finally {
-                    // 重置文件输入，允许重复选择同一文件
-                    event.target.value = '';
                 }
-            }
-            
-            function formatFileSize(bytes) {
-                if (bytes < 1024) return bytes + ' bytes';
-                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-                else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
             }
             
             function readFileAsText(file) {
@@ -587,450 +503,426 @@
                 });
             }
             
-            async function processProfileData() {
+            function processProfileData() {
                 try {
                     validateProfileData(profileData);
-                    
-                    // 延迟加载Chart.js
-                    if (!chartJSLoaded) {
-                        await loadChartJS();
-                        chartJSLoaded = true;
-                    }
-                    
                     analyzeProfile(profileData);
                     loading.style.display = 'none';
                     results.style.display = 'block';
-                    
-                    // 滚动到结果区域
-                    setTimeout(() => {
-                        results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 100);
                 } catch (error) {
                     showError('数据分析失败: ' + error.message);
                 }
             }
-        });
-        
-        function resetUI() {
-            document.getElementById('errorMsg').style.display = 'none';
-            document.getElementById('analysisResults').style.display = 'none';
-            document.getElementById('fileInfo').style.display = 'none';
-        }
-        
-        function showError(message) {
-            const errorMsg = document.getElementById('errorMsg');
-            errorText.textContent = message;
-            errorMsg.style.display = 'block';
-            document.getElementById('loading').style.display = 'none';
             
-            // 自动隐藏错误信息
-            setTimeout(() => {
+            function resetUI() {
                 errorMsg.style.display = 'none';
-            }, 5000);
-        }
-        
-        function validateProfileData(data) {
-            if (!data || typeof data !== 'object') {
-                throw new Error('无效的数据格式');
+                results.style.display = 'none';
             }
-            if (!data.nodes || !Array.isArray(data.nodes)) {
-                throw new Error('缺少nodes数组');
+            
+            function showError(message) {
+                errorText.textContent = message;
+                errorMsg.style.display = 'block';
+                loading.style.display = 'none';
             }
-            if (!data.samples || !Array.isArray(data.samples)) {
-                throw new Error('缺少samples数组');
+            
+            function validateProfileData(data) {
+                if (!data || typeof data !== 'object') {
+                    throw new Error('无效的数据格式');
+                }
+                if (!data.nodes || !Array.isArray(data.nodes)) {
+                    throw new Error('缺少nodes数组');
+                }
+                if (!data.samples || !Array.isArray(data.samples)) {
+                    throw new Error('缺少samples数组');
+                }
             }
-            if (!data.timeDeltas || !Array.isArray(data.timeDeltas)) {
-                throw new Error('缺少timeDeltas数组');
-            }
-        }
-        
-        function analyzeProfile(data) {
-            // 计算总时间(微秒转毫秒)
-            totalTimeMs = (data.endTime - data.startTime) / 1000;
             
-            // 采样点数量
-            document.getElementById('sampleCount').textContent = data.samples.length;
-            
-            // 分析函数调用
-            functionStats = analyzeFunctionCalls(data, totalTimeMs);
-            
-            // 更新显示
-            updateTimeDisplay();
-            
-            // 计算评分
-            const score = calculateScore(functionStats, totalTimeMs);
-            renderScore(score);
-            
-            // 渲染结果
-            renderResults(functionStats, totalTimeMs);
-        }
-        
-        function analyzeFunctionCalls(data, totalTime) {
-            const functions = {};
-            
-            // 初始化函数数据
-            data.nodes.forEach(node => {
-                const funcId = node.id;
-                const callFrame = node.callFrame || {};
+            function analyzeProfile(data) {
+                // 计算总时间(微秒转毫秒)
+                totalTimeMs = (data.endTime - data.startTime) / 1000;
+                document.getElementById('totalTime').textContent = formatTime(totalTimeMs);
+                document.getElementById('sampleCount').textContent = data.samples.length;
                 
-                functions[funcId] = {
-                    id: funcId,
-                    name: callFrame.functionName || '(匿名函数)',
-                    url: callFrame.url,
-                    scriptId: callFrame.scriptId,
-                    lineNumber: callFrame.lineNumber,
-                    hitCount: node.hitCount || 0,
-                    selfTime: 0,    // 毫秒
-                    totalTime: 0,   // 毫秒
-                    avgTime: 0,     // 毫秒
-                    percentage: 0   // 耗时占比
-                };
-            });
-            
-            // 计算耗时
-            data.samples.forEach((sample, index) => {
-                const timeDelta = (data.timeDeltas[index] || 0) / 1000; // 转为毫秒
+                // 分析函数调用
+                functionStats = analyzeFunctionCalls(data, totalTimeMs);
                 
-                // 更新顶层函数的自身时间
-                if (functions[sample]) {
-                    functions[sample].selfTime += timeDelta;
+                // 更新最耗时的函数
+                if (functionStats.length > 0) {
+                    document.getElementById('topFunction').textContent = 
+                        `${getDisplayName(functionStats[0])} (${formatTime(functionStats[0].selfTime)})`;
                 }
                 
-                // 更新调用链中所有函数的总时间
-                let currentId = sample;
-                while (currentId && functions[currentId]) {
-                    functions[currentId].totalTime += timeDelta;
-                    const parentNode = data.nodes.find(n => n.children && n.children.includes(currentId));
-                    currentId = parentNode ? parentNode.id : null;
-                }
-            });
+                // 更新平均调用时间
+                const totalCalls = functionStats.reduce((sum, f) => sum + f.hitCount, 0);
+                const avgCallTime = totalCalls > 0 ? 
+                    functionStats.reduce((sum, f) => sum + f.selfTime, 0) / totalCalls : 0;
+                document.getElementById('avgCallTime').textContent = formatTime(avgCallTime);
+                
+                // 渲染结果
+                renderResults(functionStats, totalTimeMs);
+            }
             
-            // 计算平均时间和耗时占比
-            return Object.values(functions)
-                .map(func => ({
-                    ...func,
-                    avgTime: func.hitCount > 0 ? func.selfTime / func.hitCount : 0,
-                    percentage: totalTime > 0 ? (func.selfTime / totalTime * 100) : 0
-                }))
-                .sort((a, b) => b.selfTime - a.selfTime);
-        }
-        
-        // 时间单位转换函数
-        function convertTime(ms, unit = 'auto') {
-            if (unit === 'auto') {
-                // 自动选择最合适的单位
+            function analyzeFunctionCalls(data, totalTime) {
+                const functions = {};
+                
+                // 初始化函数数据
+                data.nodes.forEach(node => {
+                    const funcId = node.id;
+                    const callFrame = node.callFrame || {};
+                    
+                    functions[funcId] = {
+                        id: funcId,
+                        name: callFrame.functionName || '(匿名函数)',
+                        url: callFrame.url,
+                        scriptId: callFrame.scriptId,
+                        lineNumber: callFrame.lineNumber,
+                        hitCount: node.hitCount || 0,
+                        selfTime: 0,
+                        totalTime: 0,
+                        avgTime: 0,
+                        percentage: 0
+                    };
+                });
+                
+                // 计算耗时
+                data.samples.forEach((sample, index) => {
+                    const timeDelta = (data.timeDeltas[index] || 0) / 1000; // 转为毫秒
+                    
+                    if (functions[sample]) {
+                        functions[sample].selfTime += timeDelta;
+                    }
+                    
+                    let currentId = sample;
+                    while (currentId && functions[currentId]) {
+                        functions[currentId].totalTime += timeDelta;
+                        const parentNode = data.nodes.find(n => n.children && n.children.includes(currentId));
+                        currentId = parentNode ? parentNode.id : null;
+                    }
+                });
+                
+                // 计算平均时间和耗时占比
+                return Object.values(functions)
+                    .map(func => ({
+                        ...func,
+                        avgTime: func.hitCount > 0 ? func.selfTime / func.hitCount : 0,
+                        percentage: totalTime > 0 ? (func.selfTime / totalTime * 100) : 0
+                    }))
+                    .sort((a, b) => b.selfTime - a.selfTime);
+            }
+            
+            function analyzeSameFunctions(data) {
+                const functionMap = {};
+                
+                data.nodes.forEach(node => {
+                    const callFrame = node.callFrame || {};
+                    const funcName = callFrame.functionName || '(匿名函数)';
+                    
+                    if (!functionMap[funcName]) {
+                        functionMap[funcName] = {
+                            count: 0,
+                            locations: new Set(),
+                            totalTime: 0,
+                            totalCalls: 0
+                        };
+                    }
+                    
+                    functionMap[funcName].count++;
+                    if (callFrame.url && callFrame.lineNumber) {
+                        const location = `${callFrame.url.split('/').pop()}:${callFrame.lineNumber}`;
+                        functionMap[funcName].locations.add(location);
+                    }
+                    
+                    // 计算相同函数的总时间和总调用次数
+                    const nodeId = node.id;
+                    const funcStats = data.samples.reduce((acc, sample, index) => {
+                        if (sample === nodeId) {
+                            acc.totalCalls++;
+                            acc.totalTime += (data.timeDeltas[index] || 0) / 1000;
+                        }
+                        return acc;
+                    }, { totalTime: 0, totalCalls: 0 });
+                    
+                    functionMap[funcName].totalTime += funcStats.totalTime;
+                    functionMap[funcName].totalCalls += funcStats.totalCalls;
+                });
+                
+                // 计算平均耗时
+                Object.keys(functionMap).forEach(funcName => {
+                    functionMap[funcName].avgTime = functionMap[funcName].totalCalls > 0 
+                        ? functionMap[funcName].totalTime / functionMap[funcName].totalCalls 
+                        : 0;
+                });
+                
+                // 过滤出有多个实例的函数
+                return Object.entries(functionMap)
+                    .filter(([_, info]) => info.count > 1)
+                    .sort((a, b) => b[1].count - a[1].count);
+            }
+            
+            function renderSameFunctions(sameFunctions) {
+                const sameFunctionsList = document.getElementById('sameFunctionsList');
+                sameFunctionsList.innerHTML = '';
+                
+                if (sameFunctions.length === 0) {
+                    sameFunctionsList.innerHTML = '<div style="color: var(--text-light);">没有发现重复的函数</div>';
+                    return;
+                }
+                
+                sameFunctions.forEach(([funcName, info]) => {
+                    const card = document.createElement('div');
+                    card.className = 'same-function-card';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'function-header';
+                    header.innerHTML = `
+                        <div class="function-name">${funcName}</div>
+                        <div class="function-count">${info.count} 处定义</div>
+                    `;
+                    card.appendChild(header);
+                    
+                    const stats = document.createElement('div');
+                    stats.className = 'function-stats';
+                    stats.innerHTML = `
+                        <div class="stat-item">
+                            <div class="stat-label">总调用次数</div>
+                            <div class="stat-value">${info.totalCalls}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">总耗时</div>
+                            <div class="stat-value">${formatTime(info.totalTime)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">平均耗时</div>
+                            <div class="stat-value highlight">${formatTime(info.avgTime)}</div>
+                        </div>
+                    `;
+                    card.appendChild(stats);
+                    
+                    const locations = document.createElement('div');
+                    locations.className = 'locations';
+                    
+                    const locationsTitle = document.createElement('div');
+                    locationsTitle.className = 'locations-title';
+                    locationsTitle.textContent = '出现位置:';
+                    locations.appendChild(locationsTitle);
+                    
+                    const locationsList = document.createElement('div');
+                    locationsList.className = 'locations-list';
+                    
+                    // 只显示前5个位置，其余隐藏
+                    const locationArray = Array.from(info.locations);
+                    const showAll = locationArray.length <= 5;
+                    
+                    locationArray.slice(0, 5).forEach(location => {
+                        const tag = document.createElement('span');
+                        tag.className = 'location-tag';
+                        tag.textContent = location;
+                        locationsList.appendChild(tag);
+                    });
+                    
+                    if (!showAll) {
+                        locationArray.slice(5).forEach(location => {
+                            const tag = document.createElement('span');
+                            tag.className = 'location-tag';
+                            tag.textContent = location;
+                            tag.style.display = 'none';
+                            locationsList.appendChild(tag);
+                        });
+                        
+                        const showMore = document.createElement('span');
+                        showMore.className = 'show-more';
+                        showMore.textContent = `显示全部 ${locationArray.length} 个位置...`;
+                        showMore.addEventListener('click', function() {
+                            locationsList.querySelectorAll('.location-tag').forEach(tag => {
+                                tag.style.display = 'inline-block';
+                            });
+                            this.style.display = 'none';
+                        });
+                        locations.appendChild(showMore);
+                    }
+                    
+                    locations.appendChild(locationsList);
+                    card.appendChild(locations);
+                    
+                    sameFunctionsList.appendChild(card);
+                });
+            }
+            
+            function formatTime(ms) {
                 if (ms >= 3600000) {
-                    return { value: ms / 3600000, unit: 'h' }; // 小时
+                    return (ms / 3600000).toFixed(2) + ' h';
                 } else if (ms >= 60000) {
-                    return { value: ms / 60000, unit: 'min' }; // 分钟
+                    return (ms / 60000).toFixed(2) + ' min';
                 } else if (ms >= 1000) {
-                    return { value: ms / 1000, unit: 's' }; // 秒
+                    return (ms / 1000).toFixed(2) + ' s';
                 } else {
-                    return { value: ms, unit: 'ms' }; // 毫秒
+                    return ms.toFixed(0) + ' ms';
                 }
-            } else if (unit === 'h') {
-                return { value: ms / 3600000, unit: 'h' };
-            } else if (unit === 'min') {
-                return { value: ms / 60000, unit: 'min' };
-            } else if (unit === 's') {
-                return { value: ms / 1000, unit: 's' };
-            } else {
-                return { value: ms, unit: 'ms' };
-            }
-        }
-        
-        // 格式化时间显示
-        function formatTime(ms, unit = 'auto') {
-            const converted = convertTime(ms, unit);
-            let formattedValue;
-            
-            if (converted.unit === 'h') {
-                formattedValue = converted.value.toFixed(4);
-            } else if (converted.unit === 'min') {
-                formattedValue = converted.value.toFixed(3);
-            } else if (converted.unit === 's') {
-                formattedValue = converted.value.toFixed(2);
-            } else {
-                formattedValue = converted.value.toFixed(0);
             }
             
-            return `${formattedValue} ${converted.unit}`;
-        }
-        
-        // 更新所有时间显示
-        function updateTimeDisplay() {
-            // 更新总采样时间
-            document.getElementById('totalTime').textContent = formatTime(totalTimeMs, currentTimeUnit);
-            
-            // 更新平均调用时间
-            const totalCalls = functionStats.reduce((sum, f) => sum + f.hitCount, 0);
-            const avgCallTime = totalCalls > 0 ? 
-                functionStats.reduce((sum, f) => sum + f.selfTime, 0) / totalCalls : 0;
-            document.getElementById('avgCallTime').textContent = formatTime(avgCallTime, currentTimeUnit);
-            
-            // 更新最耗时的函数
-            if (functionStats.length > 0) {
-                const topFunc = functionStats[0];
-                document.getElementById('topFunction').textContent = 
-                    `${getDisplayName(topFunc)} (${formatTime(topFunc.selfTime, currentTimeUnit)})`;
-            }
-            
-            // 更新表格中的时间显示
-            const tableBody = document.querySelector('#timeTable tbody');
-            if (tableBody) {
+            function renderResults(stats, totalTime) {
+                // 渲染图表
+                renderTimeChart(stats);
+                
+                // 渲染表格
+                const tableBody = document.querySelector('#timeTable tbody');
                 tableBody.innerHTML = '';
-                functionStats.slice(0, 100).forEach(func => {
+                
+                stats.slice(0, 100).forEach(func => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td class="function-name">${getDisplayName(func)}</td>
+                        <td>${getDisplayName(func)}</td>
                         <td>${func.hitCount}</td>
-                        <td>${formatTime(func.selfTime, currentTimeUnit)}</td>
-                        <td class="highlight">${formatTime(func.avgTime, currentTimeUnit)}</td>
-                        <td class="pc-optimized">${func.percentage.toFixed(2)}%</td>
+                        <td>${formatTime(func.selfTime)}</td>
+                        <td class="highlight">${formatTime(func.avgTime)}</td>
                         <td>${getLocationInfo(func)}</td>
                     `;
                     tableBody.appendChild(row);
                 });
+                
+                // 更新移动端函数列表
+                updateMobileFunctionList(stats);
+                
+                // 更新相同函数统计
+                const sameFunctions = analyzeSameFunctions(profileData);
+                renderSameFunctions(sameFunctions);
             }
             
-            // 更新图表
-            if (timeChart) {
-                renderTimeChart(functionStats);
-            }
-        }
-        
-        function calculateScore(functionStats, totalTime) {
-            const MAX_SCORE = 100;
-            let score = MAX_SCORE;
-            
-            // 1. 检查超长耗时函数
-            const longRunningFuncs = functionStats.filter(f => f.selfTime > 50);
-            if (longRunningFuncs.length > 0) {
-                score -= Math.min(30, longRunningFuncs.length * 5);
-            }
-            
-            // 2. 检查高频调用函数
-            const highFrequencyFuncs = functionStats.filter(f => f.hitCount > 100);
-            if (highFrequencyFuncs.length > 0) {
-                score -= Math.min(20, highFrequencyFuncs.length * 3);
-            }
-            
-            // 3. 检查平均耗时
-            const avgCallTime = functionStats.reduce((sum, f) => sum + f.selfTime, 0) / 
-                              functionStats.reduce((sum, f) => sum + f.hitCount, 1);
-            
-            if (avgCallTime > 5) {
-                score -= Math.min(15, (avgCallTime - 5) * 3);
-            }
-            
-            // 4. 检查匿名函数数量
-            const anonymousFuncs = functionStats.filter(f => f.name === '(匿名函数)');
-            if (anonymousFuncs.length > 5) {
-                score -= Math.min(10, anonymousFuncs.length);
-            }
-            
-            return Math.max(0, Math.min(MAX_SCORE, Math.round(score)));
-        }
-        
-        function renderScore(score) {
-            const scoreElement = document.getElementById('scoreValue');
-            const descriptionElement = document.getElementById('scoreDescription');
-            
-            scoreElement.textContent = score;
-            
-            // 根据分数设置描述
-            if (score >= 85) {
-                descriptionElement.textContent = '优秀 - 脚本性能非常好';
-                descriptionElement.style.color = 'var(--secondary)';
-            } else if (score >= 70) {
-                descriptionElement.textContent = '良好 - 性能表现不错';
-                descriptionElement.style.color = '#689f38';
-            } else if (score >= 50) {
-                descriptionElement.textContent = '一般 - 有改进空间';
-                descriptionElement.style.color = '#ffa000';
-            } else {
-                descriptionElement.textContent = '较差 - 需要优化';
-                descriptionElement.style.color = 'var(--error)';
-            }
-        }
-        
-        function renderResults(stats, totalTime) {
-            // 渲染图表
-            renderTimeChart(stats);
-            
-            // 渲染表格
-            const tableBody = document.querySelector('#timeTable tbody');
-            tableBody.innerHTML = '';
-            
-            stats.slice(0, 100).forEach(func => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="function-name">${getDisplayName(func)}</td>
-                    <td>${func.hitCount}</td>
-                    <td>${formatTime(func.selfTime, currentTimeUnit)}</td>
-                    <td class="highlight">${formatTime(func.avgTime, currentTimeUnit)}</td>
-                    <td class="pc-optimized">${func.percentage.toFixed(2)}%</td>
-                    <td>${getLocationInfo(func)}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-        
-        function renderTimeChart(functionStats) {
-            const ctx = document.getElementById('timeChart').getContext('2d');
-            const topFunctions = functionStats.slice(0, 15); // PC端显示前15个
-            
-            // 根据当前时间单位调整图表数据
-            const timeData = topFunctions.map(f => {
-                const converted = convertTime(f.selfTime, currentTimeUnit);
-                return converted.value;
-            });
-            
-            const avgTimeData = topFunctions.map(f => {
-                const converted = convertTime(f.avgTime, currentTimeUnit);
-                return converted.value;
-            });
-            
-            // 获取当前时间单位标签
-            let timeUnitLabel;
-            switch(currentTimeUnit) {
-                case 'h': timeUnitLabel = '小时 (h)'; break;
-                case 'min': timeUnitLabel = '分钟 (min)'; break;
-                case 's': timeUnitLabel = '秒 (s)'; break;
-                default: timeUnitLabel = '毫秒 (ms)';
+            function updateMobileFunctionList(stats) {
+                const mobileList = document.getElementById('mobileFunctionList');
+                mobileList.innerHTML = '';
+                
+                if (window.innerWidth <= 768) {
+                    document.getElementById('timeTable').style.display = 'none';
+                    mobileList.style.display = 'block';
+                    
+                    stats.slice(0, 50).forEach(func => {
+                        const item = document.createElement('div');
+                        item.className = 'stat-card';
+                        item.style.marginBottom = '12px';
+                        item.innerHTML = `
+                            <div style="font-weight:bold;margin-bottom:8px;">${getDisplayName(func)}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                <div>
+                                    <div style="font-size:0.8rem;color:var(--text-light);">调用次数</div>
+                                    <div>${func.hitCount}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.8rem;color:var(--text-light);">总耗时</div>
+                                    <div>${formatTime(func.selfTime)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.8rem;color:var(--text-light);">平均耗时</div>
+                                    <div class="highlight">${formatTime(func.avgTime)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.8rem;color:var(--text-light);">位置</div>
+                                    <div>${getLocationInfo(func)}</div>
+                                </div>
+                            </div>
+                        `;
+                        mobileList.appendChild(item);
+                    });
+                } else {
+                    document.getElementById('timeTable').style.display = 'table';
+                    mobileList.style.display = 'none';
+                }
             }
             
-            // 销毁旧图表
-            if (timeChart) {
-                timeChart.destroy();
-            }
-            
-            timeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: topFunctions.map(f => getShortName(f)),
-                    datasets: [{
-                        label: `总耗时 (${timeUnitLabel})`,
-                        data: timeData,
-                        backgroundColor: 'rgba(66, 133, 244, 0.7)',
-                        borderColor: 'rgba(66, 133, 244, 1)',
-                        borderWidth: 1,
-                        yAxisID: 'y'
-                    }, {
-                        label: `平均耗时 (${timeUnitLabel})`,
-                        data: avgTimeData,
-                        backgroundColor: 'rgba(52, 168, 83, 0.7)',
-                        borderColor: 'rgba(52, 168, 83, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
+            function renderTimeChart(functionStats) {
+                const ctx = document.getElementById('timeChart').getContext('2d');
+                const topFunctions = functionStats.slice(0, 10);
+                
+                // 销毁旧图表
+                if (timeChart) {
+                    timeChart.destroy();
+                }
+                
+                timeChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: topFunctions.map(f => getShortName(f)),
+                        datasets: [{
+                            label: '总耗时 (ms)',
+                            data: topFunctions.map(f => f.selfTime),
+                            backgroundColor: 'rgba(66, 133, 244, 0.7)',
+                            borderColor: 'rgba(66, 133, 244, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        const func = topFunctions[context.dataIndex];
+                                        return [
+                                            `调用次数: ${func.hitCount}`,
+                                            `平均耗时: ${formatTime(func.avgTime)}`,
+                                            `位置: ${getLocationInfo(func)}`
+                                        ].join('\n');
+                                    }
+                                }
+                            }
                         },
-                        tooltip: {
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    const func = topFunctions[tooltipItems[0].dataIndex];
-                                    return getDisplayName(func);
-                                },
-                                afterLabel: function(context) {
-                                    const func = topFunctions[context.dataIndex];
-                                    return [
-                                        `文件: ${func.url || '未知'}`,
-                                        `行号: ${func.lineNumber || '未知'}`,
-                                        `调用次数: ${func.hitCount}`,
-                                        `总耗时: ${formatTime(func.selfTime, currentTimeUnit)}`,
-                                        `平均耗时: ${formatTime(func.avgTime, currentTimeUnit)}`,
-                                        `耗时占比: ${func.percentage.toFixed(2)}%`
-                                    ].join('\n');
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '耗时 (ms)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 }
                             }
                         }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: `总耗时 (${timeUnitLabel})`
-                            },
-                            beginAtZero: true
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: `平均耗时 (${timeUnitLabel})`
-                            },
-                            grid: {
-                                drawOnChartArea: false
-                            },
-                            beginAtZero: true
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
                     }
+                });
+            }
+            
+            function getDisplayName(func) {
+                if (func.name && func.name !== '(匿名函数)') return func.name;
+                
+                let locationInfo = getLocationInfo(func);
+                if (locationInfo !== '-') {
+                    return `(匿名函数 @ ${locationInfo})`;
                 }
-            });
-        }
-        
-        // 辅助函数：获取显示名称
-        function getDisplayName(func) {
-            // 如果有名称直接返回
-            if (func.name && func.name !== '(匿名函数)') return func.name;
-            
-            // 匿名函数处理 - 尝试使用位置信息
-            let locationInfo = getLocationInfo(func);
-            if (locationInfo !== '-') {
-                return `(匿名函数 @ ${locationInfo})`;
+                
+                return '(匿名函数)';
             }
             
-            // 如果连位置信息都没有
-            return '(匿名函数)';
-        }
-        
-        // 辅助函数：获取短名称(用于图表标签)
-        function getShortName(func) {
-            if (func.name && func.name !== '(匿名函数)') {
-                return func.name.length > 25 ? func.name.substring(0, 25) + '...' : func.name;
+            function getShortName(func) {
+                if (func.name && func.name !== '(匿名函数)') {
+                    return func.name.length > 20 ? func.name.substring(0, 20) + '...' : func.name;
+                }
+                
+                if (func.url) {
+                    const fileName = func.url.split('/').pop();
+                    return fileName ? `(匿名 @ ${fileName})` : '(匿名函数)';
+                }
+                
+                return '(匿名函数)';
             }
             
-            // 匿名函数显示更简洁的信息
-            if (func.url) {
+            function getLocationInfo(func) {
+                if (!func.url) return '-';
+                
                 const fileName = func.url.split('/').pop();
-                return fileName ? `(匿名 @ ${fileName})` : '(匿名函数)';
+                let location = fileName;
+                
+                if (func.lineNumber) {
+                    location += `:${func.lineNumber}`;
+                }
+                
+                return location;
             }
-            
-            return '(匿名函数)';
-        }
-        
-        // 辅助函数：获取位置信息
-        function getLocationInfo(func) {
-            if (!func.url) return '-';
-            
-            const fileName = func.url.split('/').pop();
-            let location = fileName;
-            
-            if (func.lineNumber) {
-                location += `:${func.lineNumber}`;
-            }
-            
-            return location;
-        }
+        });
     </script>
 </body>
 </html>
